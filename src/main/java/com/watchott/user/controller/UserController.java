@@ -9,10 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,12 +36,8 @@ public class UserController {
             return ApiResponse.fail(errorMessage);
         }
 
-        try {
-            userService.save(userDto);
-            return ApiResponse.success("회원가입이 완료되었습니다.");
-        } catch (Exception e) {
-            return ApiResponse.error();
-        }
+        userService.save(userDto);
+        return ApiResponse.success("회원가입이 완료되었습니다.");
     }
 
     @PostMapping(value = "/login")
@@ -53,16 +45,10 @@ public class UserController {
             , HttpServletResponse response
             , @RequestBody UserDto userDto) {
 
-        try {
-            TokenInfoDto tokenInfoDto = userService.login(userDto);
-            jwtTokenService.registerRefreshToken(response, request, tokenInfoDto);
-            tokenInfoDto.setRefreshToken(null);
-            return ApiResponse.success(tokenInfoDto);
-        } catch (BadCredentialsException | UsernameNotFoundException e) {
-            return ApiResponse.fail("아이디 또는 비밀번호가 일치하지 않습니다.");
-        } catch (Exception e) {
-            return ApiResponse.error();
-        }
+        TokenInfoDto tokenInfoDto = userService.login(userDto);
+        jwtTokenService.registerRefreshToken(response, request, tokenInfoDto);
+        tokenInfoDto.setRefreshToken(null);
+        return ApiResponse.success(tokenInfoDto);
     }
 
 
@@ -70,14 +56,8 @@ public class UserController {
     public ApiResponse logout(HttpServletRequest request
             , HttpServletResponse response) {
 
-        try {
-            jwtTokenService.removeToken(response, request);
-
-        } catch (Exception e) {
-            return ApiResponse.success("로그아웃이 완료되었습니다.");
-        }
-
-        return  ApiResponse.error();
+        jwtTokenService.removeToken(response, request);
+        return ApiResponse.success("로그아웃이 완료되었습니다.");
     }
 
 }

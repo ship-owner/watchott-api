@@ -1,6 +1,7 @@
 package com.watchott.movie.controller;
 
 import com.watchott.common.dto.ApiResponse;
+import com.watchott.common.service.RedisService;
 import com.watchott.movie.dto.MovieDto;
 import com.watchott.movie.dto.MovieListDto;
 import com.watchott.movie.dto.MovieSearchDto;
@@ -8,9 +9,6 @@ import com.watchott.movie.dto.ProviderDto;
 import com.watchott.movie.service.MovieService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 
@@ -28,63 +26,48 @@ public class MovieController {
 
     private final MovieService movieService;
 
+    private final RedisService redisService;
+
     @GetMapping(value = "/detail/{movieId}")
     public ApiResponse<MovieDto> detail(@PathVariable(value = "movieId") Integer movieId) {
-        try {
-            return ApiResponse.success(movieService.findDetailByMovieId(movieId));
-        } catch (Exception e) {
-            return ApiResponse.error();
-        }
+      return ApiResponse.success(movieService.findDetailByMovieId(movieId));
     }
+
 
     @GetMapping(value = "/trend")
     public ApiResponse<List<MovieDto>> getMovieTrends(){
-        try {
-            return ApiResponse.success(movieService.getMovieTrends());
-        } catch (Exception e) {
-            return ApiResponse.error();
+
+        List<MovieDto> trends = (List<MovieDto>) redisService.getData("movieTrends");
+
+        if (trends == null || trends.isEmpty()) {
+            trends = movieService.getMovieTrends();
+            redisService.setData("movieTrends",trends);
         }
+
+        return ApiResponse.success(trends);
     }
 
     @GetMapping(value = "/latest")
     public ApiResponse<List<MovieDto>> getLatestMovies()
     {
-        try {
-            Date now = new Date();
+        List<MovieDto> latest = (List<MovieDto>) redisService.getData("movieLatest");
 
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(now);
-            calendar.add(Calendar.MONTH, -1);
-
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
-            MovieSearchDto movieSearchDto = new MovieSearchDto();
-            movieSearchDto.setRegion("KR");
-            movieSearchDto.setSortBy("popularity.desc");
-            movieSearchDto.setReleaseDateLte(sdf.format(now));
-            movieSearchDto.setReleaseDateGte(sdf.format(calendar.getTime()));
-            return ApiResponse.success(movieService.findMovieList(movieSearchDto));
-        } catch (Exception e) {
-            return ApiResponse.error();
+        if (latest == null || latest.isEmpty()) {
+            latest = movieService.getLatestMovie();
+            redisService.setData("movieLatest", latest);
         }
+
+        return ApiResponse.success(latest);
     }
 
     @GetMapping(value = "/providers")
     public ApiResponse<List<ProviderDto>> getProviders(){
-        try {
-            return ApiResponse.success(movieService.getProviders());
-        } catch (Exception e) {
-            return ApiResponse.error();
-        }
+        return ApiResponse.success(movieService.getProviders());
     }
 
 
     @GetMapping(value = "/search")
     public ApiResponse<MovieListDto> searchMovies(MovieSearchDto movieSearchDto){
-        try {
-            return ApiResponse.success(movieService.searchMovies(movieSearchDto));
-        } catch (Exception e) {
-            return ApiResponse.error();
-        }
+        return ApiResponse.success(movieService.searchMovies(movieSearchDto));
     }
 }

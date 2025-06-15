@@ -54,7 +54,7 @@ public class UserService {
      * description : 로그인 정보 검증하여 토큰 반환
      *
      */
-    public TokenInfoDto login(UserDto userDto) throws Exception{
+    public TokenInfoDto login(UserDto userDto) {
         // 1. Login ID/PW 를 기반으로 Authentication 객체 생성
         // 이때 authentication 는 인증 여부를 확인하는 authenticated 값이 false
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDto.getUserId(), userDto.getPassword());
@@ -64,9 +64,7 @@ public class UserService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
         // 3. 인증 정보를 기반으로 JWT 토큰 생성
-        TokenInfoDto tokenInfo = jwtTokenProvider.generateToken((User)authentication.getPrincipal());
-
-        return tokenInfo;
+        return jwtTokenProvider.generateToken((User)authentication.getPrincipal());
     }
 
 }
